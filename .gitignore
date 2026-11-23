@@ -1,0 +1,36 @@
+# --- Secrets -----------------------------------------------------------------
+# The NVD API key lives in .env. Only .env.example (with an empty value) is
+# committed, so a real key can never reach the repo by accident.
+.env
+
+# --- API response cache ------------------------------------------------------
+# cache.db holds NVD / KEV / EPSS responses. It can be rebuilt at any time and
+# has no place in version control.
+cache.db
+
+# --- Engagement data ---------------------------------------------------------
+# Real scan data must never be committed. The template repo is public, and even
+# in the private engagement repo the raw outputs stay on the operator's machine.
+# The evidence that matters is copied into the GitHub issues.
+# The .gitkeep files are kept so the empty folders exist after a fresh clone.
+engagement/inbox/*
+!engagement/inbox/.gitkeep
+engagement/output/*
+!engagement/output/.gitkeep
+
+# The one output that IS committed: the final report, because the
+# report-writer opens it as a pull request for the auditor to review.
+!engagement/output/report.md
+
+# Extra safety net: a .nessus export dropped anywhere else in the repo is also
+# ignored. The only .nessus file allowed is the synthetic test fixture.
+*.nessus
+!tests/fixtures/*.nessus
+
+# --- Python tooling ----------------------------------------------------------
+__pycache__/
+*.pyc
+.pytest_cache/
+.ruff_cache/
+.venv/
+venv/

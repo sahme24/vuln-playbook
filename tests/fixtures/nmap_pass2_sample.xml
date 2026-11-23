@@ -1,0 +1,53 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE nmaprun>
+<!--
+  SYNTHETIC TEST FIXTURE - NOT REAL SCAN DATA.
+
+  Shape of an Nmap pass-2 sweep: the hosts pass 1 reported as down
+  (see nmap_sample.xml), scanned again with -Pn (skip host discovery and
+  assume up) on a short list of common TCP ports.
+
+  Expected interpretation:
+    192.0.2.30 : live         (port 445 open, so the host answered)
+    192.0.2.40 : filtered     (no open/closed ports, but a firewall sent
+                               "admin-prohibited" ICMP replies for the IP)
+    192.0.2.50 : unresponsive (no reply of any kind on any port)
+
+  With -Pn every host is listed as "up" (reason "user-set") because Nmap was
+  told to assume that. The real answer comes from the port states.
+-->
+<nmaprun scanner="nmap" args="nmap -Pn -v -p 21,22,23,25,53,80,110,135,139,143,443,445,993,995,1433,3306,3389,5900,8080,8443 -T3 -oX pass2.xml 192.0.2.30 192.0.2.40 192.0.2.50" start="1796134300" startstr="Tue Dec  1 09:11:40 2026" version="7.94" xmloutputversion="1.05">
+<verbose level="1"/>
+<debugging level="0"/>
+<host starttime="1796134300" endtime="1796134309"><status state="up" reason="user-set" reason_ttl="0"/>
+<address addr="192.0.2.30" addrtype="ipv4"/>
+<hostnames>
+<hostname name="files01.example.test" type="PTR"/>
+</hostnames>
+<ports><extraports state="filtered" count="19">
+<extrareasons reason="no-response" count="19" proto="tcp" ports="21-23,25,53,80,110,135,139,143,443,993,995,1433,3306,3389,5900,8080,8443"/>
+</extraports>
+<port protocol="tcp" portid="445"><state state="open" reason="syn-ack" reason_ttl="128"/><service name="microsoft-ds" method="table" conf="3"/></port>
+</ports>
+</host>
+<host starttime="1796134300" endtime="1796134312"><status state="up" reason="user-set" reason_ttl="0"/>
+<address addr="192.0.2.40" addrtype="ipv4"/>
+<hostnames>
+</hostnames>
+<ports><extraports state="filtered" count="20">
+<extrareasons reason="admin-prohibited" count="20" proto="tcp" ports="21-23,25,53,80,110,135,139,143,443,445,993,995,1433,3306,3389,5900,8080,8443"/>
+</extraports>
+</ports>
+</host>
+<host starttime="1796134300" endtime="1796134315"><status state="up" reason="user-set" reason_ttl="0"/>
+<address addr="192.0.2.50" addrtype="ipv4"/>
+<hostnames>
+</hostnames>
+<ports><extraports state="filtered" count="20">
+<extrareasons reason="no-response" count="20" proto="tcp" ports="21-23,25,53,80,110,135,139,143,443,445,993,995,1433,3306,3389,5900,8080,8443"/>
+</extraports>
+</ports>
+</host>
+<runstats><finished time="1796134315" timestr="Tue Dec  1 09:11:55 2026" summary="Nmap done; 3 IP addresses (3 hosts up) scanned in 15.10 seconds" elapsed="15.10" exit="success"/><hosts up="3" down="0" total="3"/>
+</runstats>
+</nmaprun>

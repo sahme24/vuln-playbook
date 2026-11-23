@@ -1,0 +1,38 @@
+# Handoff issues coordinate the run. The orchestrator opens the kickoff issue
+# (labelled with the current stage:* label) through `scripts/board.py
+# create-issue`. This form exists so the shape is documented and a human can
+# open one by hand if needed.
+name: Handoff
+description: Coordination issue, for example the run kickoff or a stage change.
+title: "Run kickoff: ENGAGEMENT NAME"
+labels: ["type:handoff"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        The kickoff issue carries exactly one `stage:` label at a time, and only the
+        orchestrator moves it. State changes are posted as handoff comments in the
+        format of `playbook/handoff-format.md`.
+  - type: input
+    id: engagement
+    attributes:
+      label: Engagement name
+      description: As written in engagement.yaml.
+    validations:
+      required: true
+  - type: dropdown
+    id: mode
+    attributes:
+      label: Run mode
+      options:
+        - live
+        - dry-run (fixtures, no scanning)
+    validations:
+      required: true
+  - type: textarea
+    id: scope_summary
+    attributes:
+      label: Scope summary
+      description: Include and exclude ranges, the window, and who authorized testing (name and reference).
+    validations:
+      required: true

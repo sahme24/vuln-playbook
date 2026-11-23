@@ -1,0 +1,164 @@
+# Triage rules: an ordered list, and the FIRST matching rule wins.
+#
+# scripts/triage.py applies these rules and records the name of the rule that
+# fired on every finding. That name goes into the "Rule fired" field of the
+# handoff block, so every verdict can be traced to one line of this file.
+#
+# --- Stages -------------------------------------------------------------------
+#   recon   Run by recon-scanner after grouping, BEFORE any issue is opened.
+#           The only allowed action is `exclude`: the finding never becomes an
+#           issue and is logged in engagement/output/excluded.json instead.
+#           Recon rules may only use conditions that need no enrichment:
+#           severity_in, plugin_id_in, has_cve.
+#   verify  Run by the verifier on one finding issue, after the enrichers.
+#           The action is the verdict (the status label without "status:").
+#
+# How the action names relate to the wording in the build spec:
+#   exclude     = "exclude" rules (filtered before issues exist)
+#   verified    = "include" rules (the finding goes in the report)
+#   needs-human = "verify" rules  (a person has to verify it)
+#   appendix    = "appendix" rules
+#   plus false-positive and accepted-risk.
+#
+# --- Conditions (all conditions in `when` must hold; empty `when` = always) ---
+#   severity_in:      [0, 1, ...]  Nessus severity 0=info 1=low 2=medium 3=high 4=critical
+#   plugin_id_in:     [12345, ...]
+#   has_cve:          true|false   the finding lists at least one CVE
+#   kev:              true|false   at least one CVE is in the CISA KEV catalog
+#   banner_only:      true|false   the description contains one of banner_phrases,
+#                                  meaning Nessus only read a version string
+#   backport_distro:  true|false   an affected host runs one of backport_distros
+#   vendor_status:    fixed | not-affected | affected | unknown
+#                     combined over the finding's CVEs: "affected" if any CVE is
+#                     affected with no fix, else "fixed" if any has a vendor fix,
+#                     else "not-affected" only if EVERY CVE is not affected,
+#                     else "unknown"
+#   accepted_risk:    true|false   matches an active entry in accepted_risks
+#                                  (engagement.yaml)
+#
+# --- Safety checks enforced by triage.py when this file is loaded -------------
+#   - rule names are unique snake_case
+#   - the last verify rule has an empty `when`, so every finding gets a verdict
+#   - every false-positive rule must say `kev: false`, so a KEV-listed CVE can
+#     never be marked a false positive without a human
+
+version: 1
+
+# Wording Nessus uses when a detection is based only on a version banner.
+# Matched case-insensitively against the plugin description.
+banner_phrases:
+  - "self-reported version"
+  - "according to its banner"
+  - "according to its self-reported version"
+
+# Distributions that backport security fixes without changing the upstream
+# version number. Matched case-insensitively against the host OS string.
+backport_distros:
+  - "Ubuntu"
+  - "Debian"
+  - "Red Hat"
+  - "CentOS"
+  - "Rocky"
+  - "AlmaLinux"
+  - "Oracle Linux"
+  - "SUSE"
+  - "Amazon Linux"
+
+rules:
+  # ---- recon stage -------------------------------------------------------
+  - name: informational_plugin
+    stage: recon
+    action: exclude
+    confidence: high
+    reason: "Severity 0 (informational) plugins describe the scan or the host, not a vulnerability."
+    when:
+      severity_in: [0]
+
+  # ---- verify stage ------------------------------------------------------
+  - name: accepted_risk_listed
+    stage: verify
+    action: accepted-risk
+    confidence: high
+    reason: "The client formally accepted this risk (see accepted_risks in engagement.yaml)."
+    when:
+      accepted_risk: true
+
+  - name: kev_on_backport_banner
+    stage: verify
+    action: needs-human
+    confidence: low
+    reason: "KEV-listed CVE, but the detection is a version banner on a distribution that backports fixes. The banner cannot prove the host is vulnerable, and a KEV finding is never dismissed without a human."
+    when:
+      kev: true
+      banner_only: true
+      backport_distro: true
+
+  - name: kev_match
+    stage: verify
+    action: verified
+    confidence: high
+    reason: "At least one CVE is in the CISA Known Exploited Vulnerabilities catalog."
+    when:
+      kev: true
+
+  - name: backport_not_affected
+    stage: verify
+    action: false-positive
+    confidence: medium
+    reason: "Banner-only detection, and the vendor states this release was never affected by any of the finding's CVEs."
+    when:
+      kev: false
+      banner_only: true
+      backport_distro: true
+      vendor_status: not-affected
+
+  - name: backport_no_fix_yet
+    stage: verify
+    action: verified
+    confidence: medium
+    reason: "Banner-only detection, and the vendor states the release is affected with no fix available, so every installed build is vulnerable."
+    when:
+      banner_only: true
+      backport_distro: true
+      vendor_status: affected
+
+  - name: banner_only_backport
+    stage: verify
+    action: needs-human
+    confidence: low
+    reason: "Banner-only detection on a distribution that backports fixes. The vendor has shipped a fix (or gives no data), and the banner cannot show whether the fixed package is installed. A credentialed package check is needed."
+    when:
+      banner_only: true
+      backport_distro: true
+
+  - name: low_severity_hardening
+    stage: verify
+    action: appendix
+    confidence: high
+    reason: "Low severity issue: reported as a hardening recommendation in the appendix."
+    when:
+      severity_in: [1]
+
+  - name: direct_detection
+    stage: verify
+    action: verified
+    confidence: high
+    reason: "Nessus observed the issue directly (not from a version banner)."
+    when:
+      banner_only: false
+
+  - name: banner_only_vendor_version
+    stage: verify
+    action: verified
+    confidence: medium
+    reason: "Banner-only detection on software that does not backport fixes, so the version string can be trusted."
+    when:
+      banner_only: true
+      backport_distro: false
+
+  - name: fallback_needs_human
+    stage: verify
+    action: needs-human
+    confidence: low
+    reason: "No rule could decide this finding."
+    when: {}

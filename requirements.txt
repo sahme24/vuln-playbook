@@ -1,0 +1,6 @@
+# Kept deliberately small. XML parsing, SQLite and argument parsing come from
+# the standard library (xml.etree.ElementTree, sqlite3, argparse).
+requests>=2.31      # HTTP client for the NVD, KEV, EPSS and vendor APIs
+PyYAML>=6.0         # reads engagement.yaml and playbook/triage-rules.yaml
+pytest>=8.0         # test runner
+ruff>=0.5           # linter, run in CI

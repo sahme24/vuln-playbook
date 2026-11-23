@@ -1,0 +1,404 @@
+<?xml version="1.0" ?>
+<!--
+  SYNTHETIC TEST FIXTURE - NOT REAL SCAN DATA.
+
+  Written by hand for the vuln-playbook tests and the dry-run demo.
+  - Every IP address is from a documentation range (192.0.2.0/24,
+    198.51.100.0/24, 203.0.113.0/24). These are never routed on the internet.
+  - Every hostname uses the reserved .example.test domain.
+  - CVE IDs are real, so the enrichers (NVD, KEV, EPSS) have something real
+    to look up. Plugin IDs in the 900000 range are made up. The
+    informational plugin IDs (19506, 22964, 11936, 10287) match the
+    well-known Nessus plugins of the same name.
+
+  Cases this file must cover (checked by tests/test_fixtures.py):
+  - KEV-listed CVE:           CVE-2021-44228 (plugin 900104) on 192.0.2.20 and 198.51.100.20
+  - Ubuntu banner-only check: plugin 900101 on 192.0.2.10 (OpenSSH version banner)
+  - Informational plugins:    19506, 22964, 11936, 10287 (severity 0)
+  - Duplicate CVE:            CVE-2016-2183 in plugins 900102 and 900105
+  - Out-of-scope host:        203.0.113.50 (outside every include range)
+  - Excluded host:            192.0.2.250 (inside include, but listed in exclude)
+  - Pass-2-only host:         192.0.2.30 (missed by Nmap pass 1, found by the -Pn sweep;
+                              informational results only)
+-->
+<NessusClientData_v2>
+<Policy>
+<policyName>Internal Basic Network Scan</policyName>
+</Policy>
+<Report name="Example Corp dry run" xmlns:cm="http://www.nessus.org/cm">
+
+<!-- ===================================================================== -->
+<!-- Host 1: Ubuntu web server. Carries the banner-only detection.         -->
+<!-- ===================================================================== -->
+<ReportHost name="192.0.2.10">
+<HostProperties>
+<tag name="HOST_START">Tue Dec  1 09:12:01 2026</tag>
+<tag name="host-ip">192.0.2.10</tag>
+<tag name="hostname">web01</tag>
+<tag name="host-fqdn">web01.example.test</tag>
+<tag name="operating-system">Linux Kernel 5.15 on Ubuntu 22.04</tag>
+<tag name="HOST_END">Tue Dec  1 09:31:44 2026</tag>
+</HostProperties>
+<ReportItem port="0" svc_name="general" protocol="tcp" severity="0" pluginID="19506" pluginName="Nessus Scan Information" pluginFamily="Settings">
+<plugin_type>summary</plugin_type>
+<risk_factor>None</risk_factor>
+<synopsis>This plugin displays information about the Nessus scan.</synopsis>
+<description>This plugin displays, for each tested host, information about the scan itself.</description>
+<solution>n/a</solution>
+<plugin_output>Scan policy used : Internal Basic Network Scan
+Credentialed checks : no</plugin_output>
+</ReportItem>
+<ReportItem port="0" svc_name="general" protocol="tcp" severity="0" pluginID="11936" pluginName="OS Identification" pluginFamily="General">
+<plugin_type>combined</plugin_type>
+<risk_factor>None</risk_factor>
+<synopsis>It is possible to guess the remote operating system.</synopsis>
+<description>Using a combination of remote probes, it is possible to guess the name of the remote operating system in use.</description>
+<solution>n/a</solution>
+<plugin_output>Remote operating system : Linux Kernel 5.15 on Ubuntu 22.04
+Confidence level : 95
+Method : SSH</plugin_output>
+</ReportItem>
+<ReportItem port="22" svc_name="ssh" protocol="tcp" severity="0" pluginID="22964" pluginName="Service Detection" pluginFamily="Service detection">
+<plugin_type>remote</plugin_type>
+<risk_factor>None</risk_factor>
+<synopsis>The remote service could be identified.</synopsis>
+<description>Nessus was able to identify the remote service by its banner or by looking at the error message it sends when it receives an HTTP request.</description>
+<solution>n/a</solution>
+<plugin_output>An SSH server is running on this port.</plugin_output>
+</ReportItem>
+<ReportItem port="443" svc_name="www" protocol="tcp" severity="0" pluginID="22964" pluginName="Service Detection" pluginFamily="Service detection">
+<plugin_type>remote</plugin_type>
+<risk_factor>None</risk_factor>
+<synopsis>The remote service could be identified.</synopsis>
+<description>Nessus was able to identify the remote service by its banner or by looking at the error message it sends when it receives an HTTP request.</description>
+<solution>n/a</solution>
+<plugin_output>A TLS-wrapped web server is running on this port.</plugin_output>
+</ReportItem>
+<ReportItem port="22" svc_name="ssh" protocol="tcp" severity="2" pluginID="900101" pluginName="OpenSSH &lt; 9.6 Multiple Vulnerabilities" pluginFamily="Misc.">
+<plugin_type>remote</plugin_type>
+<risk_factor>Medium</risk_factor>
+<cvss3_base_score>5.9</cvss3_base_score>
+<cvss3_vector>CVSS:3.0/AV:N/AC:H/PR:N/UI:N/S:U/C:N/I:H/A:N</cvss3_vector>
+<cvss_base_score>4.3</cvss_base_score>
+<vpr_score>6.1</vpr_score>
+<exploit_available>true</exploit_available>
+<cve>CVE-2023-48795</cve>
+<cve>CVE-2023-51385</cve>
+<synopsis>The SSH server running on the remote host is affected by multiple vulnerabilities.</synopsis>
+<description>According to its banner, the version of OpenSSH running on the remote host is prior to 9.6. It is therefore affected by multiple vulnerabilities, including a prefix truncation weakness in the SSH transport protocol (Terrapin).
+
+Note that Nessus has not tested for these issues but has instead relied only on the application's self-reported version number.</description>
+<solution>Upgrade to OpenSSH version 9.6 or later.</solution>
+<see_also>https://www.openssh.com/txt/release-9.6
+https://terrapin-attack.com/</see_also>
+<plugin_output>
+  Version source    : SSH-2.0-OpenSSH_8.9p1 Ubuntu-3ubuntu0.1
+  Installed version : 8.9p1
+  Fixed version     : 9.6
+</plugin_output>
+</ReportItem>
+<ReportItem port="443" svc_name="www" protocol="tcp" severity="3" pluginID="900102" pluginName="SSL Medium Strength Cipher Suites Supported (SWEET32)" pluginFamily="General">
+<plugin_type>remote</plugin_type>
+<risk_factor>High</risk_factor>
+<cvss3_base_score>7.5</cvss3_base_score>
+<cvss3_vector>CVSS:3.0/AV:N/AC:L/PR:N/UI:N/S:U/C:H/I:N/A:N</cvss3_vector>
+<cvss_base_score>5.0</cvss_base_score>
+<vpr_score>5.1</vpr_score>
+<exploit_available>false</exploit_available>
+<cve>CVE-2016-2183</cve>
+<synopsis>The remote service supports the use of medium strength SSL ciphers.</synopsis>
+<description>The remote host supports the use of SSL ciphers that offer medium strength encryption, including 3DES. Medium strength ciphers use key lengths of at least 64 bits and less than 112 bits.</description>
+<solution>Reconfigure the affected application if possible to avoid use of medium strength ciphers.</solution>
+<see_also>https://sweet32.info/</see_also>
+<plugin_output>
+  Medium Strength Ciphers (&gt; 64-bit and &lt; 112-bit key, or 3DES)
+    ECDHE-RSA-DES-CBC3-SHA   Kx=ECDH  Au=RSA  Enc=3DES-CBC(168)  Mac=SHA1
+</plugin_output>
+</ReportItem>
+<ReportItem port="22" svc_name="ssh" protocol="tcp" severity="1" pluginID="900103" pluginName="SSH Server CBC Mode Ciphers Enabled" pluginFamily="Misc.">
+<plugin_type>remote</plugin_type>
+<risk_factor>Low</risk_factor>
+<cvss3_base_score>3.7</cvss3_base_score>
+<cvss3_vector>CVSS:3.0/AV:N/AC:H/PR:N/UI:N/S:U/C:L/I:N/A:N</cvss3_vector>
+<cvss_base_score>2.6</cvss_base_score>
+<cve>CVE-2008-5161</cve>
+<synopsis>The SSH server is configured to use Cipher Block Chaining.</synopsis>
+<description>The SSH server is configured to support Cipher Block Chaining (CBC) encryption. This may allow an attacker to recover the plaintext message from the ciphertext.</description>
+<solution>Disable CBC mode cipher encryption, and enable CTR or GCM cipher mode encryption.</solution>
+<plugin_output>
+  The following client-to-server CBC algorithms are supported :
+    aes128-cbc
+    aes256-cbc
+</plugin_output>
+</ReportItem>
+</ReportHost>
+
+<!-- ===================================================================== -->
+<!-- Host 2: Windows application server. KEV finding + duplicate CVE.      -->
+<!-- ===================================================================== -->
+<ReportHost name="192.0.2.20">
+<HostProperties>
+<tag name="HOST_START">Tue Dec  1 09:12:03 2026</tag>
+<tag name="host-ip">192.0.2.20</tag>
+<tag name="hostname">app01</tag>
+<tag name="host-fqdn">app01.example.test</tag>
+<tag name="operating-system">Microsoft Windows Server 2019 Standard</tag>
+<tag name="HOST_END">Tue Dec  1 09:40:12 2026</tag>
+</HostProperties>
+<ReportItem port="0" svc_name="general" protocol="tcp" severity="0" pluginID="19506" pluginName="Nessus Scan Information" pluginFamily="Settings">
+<plugin_type>summary</plugin_type>
+<risk_factor>None</risk_factor>
+<synopsis>This plugin displays information about the Nessus scan.</synopsis>
+<description>This plugin displays, for each tested host, information about the scan itself.</description>
+<solution>n/a</solution>
+<plugin_output>Scan policy used : Internal Basic Network Scan
+Credentialed checks : no</plugin_output>
+</ReportItem>
+<ReportItem port="0" svc_name="general" protocol="tcp" severity="0" pluginID="11936" pluginName="OS Identification" pluginFamily="General">
+<plugin_type>combined</plugin_type>
+<risk_factor>None</risk_factor>
+<synopsis>It is possible to guess the remote operating system.</synopsis>
+<description>Using a combination of remote probes, it is possible to guess the name of the remote operating system in use.</description>
+<solution>n/a</solution>
+<plugin_output>Remote operating system : Microsoft Windows Server 2019 Standard
+Confidence level : 99
+Method : MSRPC</plugin_output>
+</ReportItem>
+<ReportItem port="0" svc_name="general" protocol="udp" severity="0" pluginID="10287" pluginName="Traceroute Information" pluginFamily="General">
+<plugin_type>remote</plugin_type>
+<risk_factor>None</risk_factor>
+<synopsis>It was possible to obtain traceroute information.</synopsis>
+<description>Makes a traceroute to the remote host.</description>
+<solution>n/a</solution>
+<plugin_output>Hop Count: 1</plugin_output>
+</ReportItem>
+<ReportItem port="8080" svc_name="www" protocol="tcp" severity="4" pluginID="900104" pluginName="Apache Log4j Remote Code Execution (Log4Shell)" pluginFamily="Web Servers">
+<plugin_type>remote</plugin_type>
+<risk_factor>Critical</risk_factor>
+<cvss3_base_score>10.0</cvss3_base_score>
+<cvss3_vector>CVSS:3.0/AV:N/AC:L/PR:N/UI:N/S:C/C:H/I:H/A:H</cvss3_vector>
+<cvss_base_score>10.0</cvss_base_score>
+<vpr_score>10.0</vpr_score>
+<exploit_available>true</exploit_available>
+<cve>CVE-2021-44228</cve>
+<synopsis>The remote web application uses a library affected by a remote code execution vulnerability.</synopsis>
+<description>The remote web application uses a version of Apache Log4j 2 that is affected by a remote code execution vulnerability in its JNDI lookup feature. Nessus confirmed the issue by sending a lookup string that causes a harmless DNS query and observing that query arrive.</description>
+<solution>Upgrade Apache Log4j to version 2.17.1 or later.</solution>
+<see_also>https://logging.apache.org/log4j/2.x/security.html</see_also>
+<plugin_output>
+  Nessus received a DNS lookup from the target after sending a crafted
+  lookup string in the User-Agent header of a request to :
+  URL : http://app01.example.test:8080/
+</plugin_output>
+</ReportItem>
+<ReportItem port="443" svc_name="www" protocol="tcp" severity="3" pluginID="900102" pluginName="SSL Medium Strength Cipher Suites Supported (SWEET32)" pluginFamily="General">
+<plugin_type>remote</plugin_type>
+<risk_factor>High</risk_factor>
+<cvss3_base_score>7.5</cvss3_base_score>
+<cvss3_vector>CVSS:3.0/AV:N/AC:L/PR:N/UI:N/S:U/C:H/I:N/A:N</cvss3_vector>
+<cvss_base_score>5.0</cvss_base_score>
+<vpr_score>5.1</vpr_score>
+<exploit_available>false</exploit_available>
+<cve>CVE-2016-2183</cve>
+<synopsis>The remote service supports the use of medium strength SSL ciphers.</synopsis>
+<description>The remote host supports the use of SSL ciphers that offer medium strength encryption, including 3DES. Medium strength ciphers use key lengths of at least 64 bits and less than 112 bits.</description>
+<solution>Reconfigure the affected application if possible to avoid use of medium strength ciphers.</solution>
+<see_also>https://sweet32.info/</see_also>
+<plugin_output>
+  Medium Strength Ciphers (&gt; 64-bit and &lt; 112-bit key, or 3DES)
+    DES-CBC3-SHA   Kx=RSA  Au=RSA  Enc=3DES-CBC(168)  Mac=SHA1
+</plugin_output>
+</ReportItem>
+<ReportItem port="3389" svc_name="msrdp" protocol="tcp" severity="3" pluginID="900102" pluginName="SSL Medium Strength Cipher Suites Supported (SWEET32)" pluginFamily="General">
+<plugin_type>remote</plugin_type>
+<risk_factor>High</risk_factor>
+<cvss3_base_score>7.5</cvss3_base_score>
+<cvss3_vector>CVSS:3.0/AV:N/AC:L/PR:N/UI:N/S:U/C:H/I:N/A:N</cvss3_vector>
+<cvss_base_score>5.0</cvss_base_score>
+<vpr_score>5.1</vpr_score>
+<exploit_available>false</exploit_available>
+<cve>CVE-2016-2183</cve>
+<synopsis>The remote service supports the use of medium strength SSL ciphers.</synopsis>
+<description>The remote host supports the use of SSL ciphers that offer medium strength encryption, including 3DES. Medium strength ciphers use key lengths of at least 64 bits and less than 112 bits.</description>
+<solution>Reconfigure the affected application if possible to avoid use of medium strength ciphers.</solution>
+<see_also>https://sweet32.info/</see_also>
+<plugin_output>
+  Medium Strength Ciphers (&gt; 64-bit and &lt; 112-bit key, or 3DES)
+    DES-CBC3-SHA   Kx=RSA  Au=RSA  Enc=3DES-CBC(168)  Mac=SHA1
+</plugin_output>
+</ReportItem>
+<ReportItem port="3389" svc_name="msrdp" protocol="tcp" severity="2" pluginID="900105" pluginName="SSL 64-bit Block Size Cipher Suites Supported (SWEET32)" pluginFamily="General">
+<plugin_type>remote</plugin_type>
+<risk_factor>Medium</risk_factor>
+<cvss3_base_score>5.9</cvss3_base_score>
+<cvss3_vector>CVSS:3.0/AV:N/AC:H/PR:N/UI:N/S:U/C:H/I:N/A:N</cvss3_vector>
+<cvss_base_score>5.0</cvss_base_score>
+<vpr_score>5.1</vpr_score>
+<exploit_available>false</exploit_available>
+<cve>CVE-2016-2183</cve>
+<synopsis>The remote service supports the use of 64-bit block ciphers.</synopsis>
+<description>The remote host supports the use of a block cipher with 64-bit blocks in one or more cipher suites. It is therefore affected by a birthday attack against long-lived sessions (SWEET32).</description>
+<solution>Reconfigure the affected application, if possible, to avoid use of all 64-bit block ciphers.</solution>
+<see_also>https://sweet32.info/</see_also>
+<plugin_output>
+  List of 64-bit block cipher suites supported by the remote server :
+    DES-CBC3-SHA   Kx=RSA  Au=RSA  Enc=3DES-CBC(168)  Mac=SHA1
+</plugin_output>
+</ReportItem>
+<ReportItem port="443" svc_name="www" protocol="tcp" severity="2" pluginID="900106" pluginName="TLS Version 1.0 Protocol Detection" pluginFamily="Service detection">
+<plugin_type>remote</plugin_type>
+<risk_factor>Medium</risk_factor>
+<cvss3_base_score>6.5</cvss3_base_score>
+<cvss3_vector>CVSS:3.0/AV:N/AC:L/PR:N/UI:N/S:U/C:L/I:L/A:N</cvss3_vector>
+<cvss_base_score>6.1</cvss_base_score>
+<synopsis>The remote service encrypts traffic using an older version of TLS.</synopsis>
+<description>The remote service accepts connections encrypted using TLS 1.0. TLS 1.0 has a number of cryptographic design flaws.</description>
+<solution>Enable support for TLS 1.2 and 1.3, and disable support for TLS 1.0.</solution>
+<plugin_output>TLSv1 is enabled and the server supports at least one cipher.</plugin_output>
+</ReportItem>
+</ReportHost>
+
+<!-- ===================================================================== -->
+<!-- Host 3: RHEL application server. Second host with the KEV finding.    -->
+<!-- ===================================================================== -->
+<ReportHost name="198.51.100.20">
+<HostProperties>
+<tag name="HOST_START">Tue Dec  1 09:12:05 2026</tag>
+<tag name="host-ip">198.51.100.20</tag>
+<tag name="hostname">app02</tag>
+<tag name="host-fqdn">app02.example.test</tag>
+<tag name="operating-system">Linux Kernel 4.18.0 on Red Hat Enterprise Linux 8</tag>
+<tag name="HOST_END">Tue Dec  1 09:35:51 2026</tag>
+</HostProperties>
+<ReportItem port="0" svc_name="general" protocol="tcp" severity="0" pluginID="19506" pluginName="Nessus Scan Information" pluginFamily="Settings">
+<plugin_type>summary</plugin_type>
+<risk_factor>None</risk_factor>
+<synopsis>This plugin displays information about the Nessus scan.</synopsis>
+<description>This plugin displays, for each tested host, information about the scan itself.</description>
+<solution>n/a</solution>
+<plugin_output>Scan policy used : Internal Basic Network Scan
+Credentialed checks : no</plugin_output>
+</ReportItem>
+<ReportItem port="8443" svc_name="www" protocol="tcp" severity="0" pluginID="22964" pluginName="Service Detection" pluginFamily="Service detection">
+<plugin_type>remote</plugin_type>
+<risk_factor>None</risk_factor>
+<synopsis>The remote service could be identified.</synopsis>
+<description>Nessus was able to identify the remote service by its banner or by looking at the error message it sends when it receives an HTTP request.</description>
+<solution>n/a</solution>
+<plugin_output>A TLS-wrapped web server is running on this port.</plugin_output>
+</ReportItem>
+<ReportItem port="8443" svc_name="www" protocol="tcp" severity="4" pluginID="900104" pluginName="Apache Log4j Remote Code Execution (Log4Shell)" pluginFamily="Web Servers">
+<plugin_type>remote</plugin_type>
+<risk_factor>Critical</risk_factor>
+<cvss3_base_score>10.0</cvss3_base_score>
+<cvss3_vector>CVSS:3.0/AV:N/AC:L/PR:N/UI:N/S:C/C:H/I:H/A:H</cvss3_vector>
+<cvss_base_score>10.0</cvss_base_score>
+<vpr_score>10.0</vpr_score>
+<exploit_available>true</exploit_available>
+<cve>CVE-2021-44228</cve>
+<synopsis>The remote web application uses a library affected by a remote code execution vulnerability.</synopsis>
+<description>The remote web application uses a version of Apache Log4j 2 that is affected by a remote code execution vulnerability in its JNDI lookup feature. Nessus confirmed the issue by sending a lookup string that causes a harmless DNS query and observing that query arrive.</description>
+<solution>Upgrade Apache Log4j to version 2.17.1 or later.</solution>
+<see_also>https://logging.apache.org/log4j/2.x/security.html</see_also>
+<plugin_output>
+  Nessus received a DNS lookup from the target after sending a crafted
+  lookup string in the User-Agent header of a request to :
+  URL : https://app02.example.test:8443/
+</plugin_output>
+</ReportItem>
+</ReportHost>
+
+<!-- ===================================================================== -->
+<!-- Host 3b: file server that only Nmap pass 2 found. Informational only. -->
+<!-- ===================================================================== -->
+<ReportHost name="192.0.2.30">
+<HostProperties>
+<tag name="HOST_START">Tue Dec  1 09:12:07 2026</tag>
+<tag name="host-ip">192.0.2.30</tag>
+<tag name="hostname">files01</tag>
+<tag name="host-fqdn">files01.example.test</tag>
+<tag name="operating-system">Microsoft Windows Server 2019 Standard</tag>
+<tag name="HOST_END">Tue Dec  1 09:20:30 2026</tag>
+</HostProperties>
+<ReportItem port="0" svc_name="general" protocol="tcp" severity="0" pluginID="19506" pluginName="Nessus Scan Information" pluginFamily="Settings">
+<plugin_type>summary</plugin_type>
+<risk_factor>None</risk_factor>
+<synopsis>This plugin displays information about the Nessus scan.</synopsis>
+<description>This plugin displays, for each tested host, information about the scan itself.</description>
+<solution>n/a</solution>
+<plugin_output>Scan policy used : Internal Basic Network Scan
+Credentialed checks : no</plugin_output>
+</ReportItem>
+<ReportItem port="445" svc_name="cifs" protocol="tcp" severity="0" pluginID="22964" pluginName="Service Detection" pluginFamily="Service detection">
+<plugin_type>remote</plugin_type>
+<risk_factor>None</risk_factor>
+<synopsis>The remote service could be identified.</synopsis>
+<description>Nessus was able to identify the remote service by its banner or by looking at the error message it sends when it receives an HTTP request.</description>
+<solution>n/a</solution>
+<plugin_output>An SMB server is running on this port.</plugin_output>
+</ReportItem>
+</ReportHost>
+
+<!-- ===================================================================== -->
+<!-- Host 4: inside the include range but listed in exclude. Must be       -->
+<!-- rejected by scope.py and never reach a finding issue.                 -->
+<!-- ===================================================================== -->
+<ReportHost name="192.0.2.250">
+<HostProperties>
+<tag name="host-ip">192.0.2.250</tag>
+<tag name="hostname">printer01</tag>
+<tag name="host-fqdn">printer01.example.test</tag>
+<tag name="operating-system">Embedded printer firmware</tag>
+</HostProperties>
+<ReportItem port="0" svc_name="general" protocol="tcp" severity="0" pluginID="19506" pluginName="Nessus Scan Information" pluginFamily="Settings">
+<plugin_type>summary</plugin_type>
+<risk_factor>None</risk_factor>
+<synopsis>This plugin displays information about the Nessus scan.</synopsis>
+<description>This plugin displays, for each tested host, information about the scan itself.</description>
+<solution>n/a</solution>
+<plugin_output>Scan policy used : Internal Basic Network Scan</plugin_output>
+</ReportItem>
+<ReportItem port="161" svc_name="snmp" protocol="udp" severity="3" pluginID="900107" pluginName="SNMP Agent Default Community Name (public)" pluginFamily="SNMP">
+<plugin_type>remote</plugin_type>
+<risk_factor>High</risk_factor>
+<cvss3_base_score>7.3</cvss3_base_score>
+<cve>CVE-1999-0517</cve>
+<synopsis>The community name of the remote SNMP server can be guessed.</synopsis>
+<description>It is possible to obtain the default community name of the remote SNMP server.</description>
+<solution>Disable the SNMP service on the remote host if you do not use it, or change the default community name.</solution>
+<plugin_output>The remote SNMP server replies to the default community name.</plugin_output>
+</ReportItem>
+</ReportHost>
+
+<!-- ===================================================================== -->
+<!-- Host 5: outside every include range. Must be rejected by scope.py.    -->
+<!-- ===================================================================== -->
+<ReportHost name="203.0.113.50">
+<HostProperties>
+<tag name="host-ip">203.0.113.50</tag>
+<tag name="hostname">ext-gw</tag>
+<tag name="host-fqdn">ext-gw.example.test</tag>
+<tag name="operating-system">Linux Kernel 5.10</tag>
+</HostProperties>
+<ReportItem port="0" svc_name="general" protocol="tcp" severity="0" pluginID="19506" pluginName="Nessus Scan Information" pluginFamily="Settings">
+<plugin_type>summary</plugin_type>
+<risk_factor>None</risk_factor>
+<synopsis>This plugin displays information about the Nessus scan.</synopsis>
+<description>This plugin displays, for each tested host, information about the scan itself.</description>
+<solution>n/a</solution>
+<plugin_output>Scan policy used : Internal Basic Network Scan</plugin_output>
+</ReportItem>
+<ReportItem port="443" svc_name="www" protocol="tcp" severity="3" pluginID="900102" pluginName="SSL Medium Strength Cipher Suites Supported (SWEET32)" pluginFamily="General">
+<plugin_type>remote</plugin_type>
+<risk_factor>High</risk_factor>
+<cvss3_base_score>7.5</cvss3_base_score>
+<cve>CVE-2016-2183</cve>
+<synopsis>The remote service supports the use of medium strength SSL ciphers.</synopsis>
+<description>The remote host supports the use of SSL ciphers that offer medium strength encryption, including 3DES.</description>
+<solution>Reconfigure the affected application if possible to avoid use of medium strength ciphers.</solution>
+<plugin_output>DES-CBC3-SHA supported.</plugin_output>
+</ReportItem>
+</ReportHost>
+
+</Report>
+</NessusClientData_v2>

@@ -1,0 +1,40 @@
+# Blocker issues ask the human to do or decide something the agents cannot:
+# launch the Nessus scan, settle a disagreement between agents, supply missing
+# information. The run waits while any blocker is open.
+name: Blocker
+description: Something only the human can do or decide. The run waits until it is resolved.
+title: "Needs human: SHORT DESCRIPTION"
+labels: ["type:blocker", "needs-human"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        **How to answer.** Do what is asked, then comment on this issue. If a decision
+        is needed, write it on its own lines like this:
+
+        ```
+        Decision: false-positive
+        Reason: one or two sentences explaining why.
+        ```
+
+        Agents are not allowed to write a `Decision:` line (the board script refuses
+        it), so a decision on this board always comes from you.
+  - type: textarea
+    id: what
+    attributes:
+      label: What is needed
+      description: The action or decision, stated so it can be done without reading anything else.
+    validations:
+      required: true
+  - type: textarea
+    id: why
+    attributes:
+      label: Why the run is blocked
+      description: What the agents tried and what evidence conflicts (with links to the related issues).
+    validations:
+      required: true
+  - type: input
+    id: related
+    attributes:
+      label: Related issues
+      description: "e.g. #12, #17"

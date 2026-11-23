@@ -1,0 +1,46 @@
+# SYNTHETIC engagement file used by the tests and the dry-run demo.
+# It is a separate copy from engagement.example.yaml, so editing the example
+# for documentation purposes can never break the tests.
+#
+# Scope is designed against tests/fixtures/sample.nessus:
+#   192.0.2.10, 192.0.2.20, 198.51.100.20  -> in scope
+#   192.0.2.250                            -> inside include but excluded
+#   203.0.113.50                           -> outside every include range
+
+engagement:
+  name: "Example Corp dry run"
+  client: "Example Corp"
+  authorized_by: "Jane Doe, IT Security Manager"
+  authorization_reference: "CHG-0001234"
+  window_start: "2026-12-01T09:00:00-05:00"
+  window_end: "2026-12-05T17:00:00-05:00"
+
+scope:
+  include:
+    - "192.0.2.0/24"
+    - "198.51.100.0/24"
+  exclude:
+    - "192.0.2.250"
+
+scanning:
+  nmap_profile: "standard"
+  nessus_policy_name: "Internal Basic Network Scan"
+  credentialed: false
+  credential_notes: ""
+
+reporting:
+  audience: "technical"
+  framework: "none"
+  severity_sla: { critical: 15, high: 30, medium: 90 }
+
+# The dry run shows one accepted risk: TLS 1.0 (plugin 900106) on app01.
+accepted_risks:
+  - plugin_id: 900106
+    accepted_by: "John Roe, Application Owner"
+    reference: "RISK-0042"
+    expires: "2027-06-30"
+    reason: "Legacy client software requires TLS 1.0 until it is replaced."
+
+approval:
+  scope_approved: true
+  approved_at: "2026-11-30T16:00:00-05:00"

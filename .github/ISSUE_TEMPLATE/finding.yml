@@ -1,0 +1,56 @@
+# Finding issues are normally opened by recon-scanner through
+# `scripts/board.py create-finding`, which fills in the same information
+# automatically. This form is for a finding a human adds by hand (for example,
+# something seen during a manual check). It starts in status:needs-verify, so
+# the verifier checks it like any other finding.
+name: Finding
+description: One vulnerability (one Nessus plugin, or one manual observation) and the hosts it affects.
+title: "[PLUGIN_ID] Short name of the issue (severity, N hosts)"
+labels: ["type:finding", "status:needs-verify"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        **Never paste credentials, tokens or password hashes here.** Describe them instead
+        ("plugin output contains a cleartext password; redacted").
+        Add the matching `severity:` label after creating the issue.
+  - type: input
+    id: plugin_id
+    attributes:
+      label: Nessus plugin ID
+      description: Write "manual" if this did not come from Nessus.
+    validations:
+      required: true
+  - type: dropdown
+    id: severity
+    attributes:
+      label: Severity (as reported by the source)
+      options:
+        - critical
+        - high
+        - medium
+        - low
+    validations:
+      required: true
+  - type: input
+    id: cves
+    attributes:
+      label: CVEs
+      description: Comma-separated, e.g. CVE-2021-44228. Write "none" if there are none.
+    validations:
+      required: true
+  - type: textarea
+    id: affected
+    attributes:
+      label: Affected hosts
+      description: One per line as IP, port/protocol. Every host must be inside the engagement scope.
+      placeholder: "192.0.2.20, 8080/tcp"
+    validations:
+      required: true
+  - type: textarea
+    id: evidence
+    attributes:
+      label: Evidence
+      description: How the issue was observed (plugin output, request/response, screenshot reference).
+    validations:
+      required: true

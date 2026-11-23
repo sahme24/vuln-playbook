@@ -1,0 +1,59 @@
+# Example engagement file.
+#
+# Prompt 1 (Intake) in the README asks the questions and writes the real
+# engagement.yaml for you. This copy shows the expected shape with made-up
+# values. Every address below is from the documentation ranges
+# (192.0.2.0/24, 198.51.100.0/24, 203.0.113.0/24), which are never routed
+# on the public internet, so the example cannot point at a real network.
+
+engagement:
+  name: "Example Corp internal vulnerability assessment"
+  client: "Example Corp"
+  authorized_by: "Jane Doe, IT Security Manager"     # the person who signed off on testing
+  authorization_reference: "CHG-0001234"             # ticket, email subject or document ID
+  # ISO 8601 with a UTC offset. The offset is required so that "inside the
+  # window" means the same moment no matter where the scan is run from.
+  window_start: "2026-12-01T09:00:00-05:00"
+  window_end: "2026-12-05T17:00:00-05:00"
+
+scope:
+  # CIDR ranges or single IPs. A target must fall inside `include` AND outside
+  # `exclude`. scripts/scope.py enforces this in code before any scan runs.
+  include:
+    - "192.0.2.0/24"
+    - "198.51.100.0/24"
+  exclude:
+    - "192.0.2.250"            # e.g. a fragile device the client asked us not to touch
+
+scanning:
+  nmap_profile: "standard"     # standard | quiet
+  nessus_policy_name: "Internal Basic Network Scan"
+  credentialed: false
+  # Describe what access exists, NEVER the credentials themselves.
+  # Good: "Domain read-only account available from the client on request."
+  # Bad:  any username, password, key or token.
+  credential_notes: ""
+
+reporting:
+  audience: "technical"        # technical | executive | both
+  framework: "none"            # none | NIST 800-53 | CIS | PCI DSS | ISO 27001
+  # Days from the report date by which each severity should be fixed.
+  severity_sla: { critical: 15, high: 30, medium: 90 }
+
+# Risks the client has formally accepted. Only the human writes this list,
+# during intake. A finding that matches an active entry gets the verdict
+# status:accepted-risk (triage rule accepted_risk_listed) instead of being
+# reported as an open issue. Each entry names EITHER a plugin_id OR a cve.
+# Leave it as [] when nothing has been accepted.
+accepted_risks: []
+#  - plugin_id: 12345                          # the Nessus plugin ID; or instead:  cve: "CVE-2016-2183"
+#    accepted_by: "John Roe, Application Owner"
+#    reference: "RISK-0042"                    # risk register ID, ticket or email subject
+#    expires: "2027-06-30"                     # optional; after this date the acceptance no longer applies
+#    reason: "Legacy client software requires TLS 1.0 until it is replaced."
+
+approval:
+  # Only the human sets this to true, after reviewing the scope summary.
+  # No agent is allowed to change it, and no live scan runs while it is false.
+  scope_approved: false
+  approved_at: ""              # ISO 8601, filled in by the human with the flag
