@@ -68,12 +68,20 @@ What happens:
    | TLS 1.0 | `accepted-risk` | `accepted_risk_listed` |
    | SSH CBC ciphers | `appendix` | `low_severity_hardening` |
 
+   Two verifiers will note that the Ubuntu lookup for CVE-2023-51385 and
+   CVE-2008-5161 failed. That is expected: those canned responses are
+   deliberately missing, so the demo also shows how a vendor outage is handled
+   (see `tests/fixtures/api/README.md`). It doesn't change any verdict.
+
 4. **The run pauses for you.** Open the `needs-human` issue and comment, for example:
    ```
-   Decision: false-positive
-   Reason: Demo - the fixed Ubuntu package is installed, so the banner version is misleading.
+   Decision: verified
+   Reason: Banner shows package 1:8.9p1-3ubuntu0.1, older than the fixed 1:8.9p1-3ubuntu0.5.
    ```
-   Then tell Claude Code to continue. (`Decision: verified` works too. The finding then goes in the report.)
+   Then tell Claude Code to continue. The banner in the fixture really is older
+   than the fixed package, so `verified` matches the evidence. (`Decision:
+   false-positive` also works if you want to see the false-positive log; give
+   your own `Reason:`.)
 5. The report-writer opens a **report PR** with Log4Shell ranked first, and the
    auditor posts its checklist verdict on the PR.
 6. **You merge the PR.** The orchestrator closes the issues and posts a run summary.
@@ -147,8 +155,12 @@ Run this engagement in DRY-RUN mode. Follow CLAUDE.md exactly, using the dry-run
 | The auditor posts `audited` on the PR | Review and **merge** the PR. The merge is the release of the report. |
 | Anything goes wrong | Every stop condition is in [playbook/rules-of-engagement.md](playbook/rules-of-engagement.md). The orchestrator stops and tells you. |
 
-Only you can write a `Decision:` line. `scripts/board.py` refuses to post one
-for an agent, so a decision on the board always came from you.
+Only you write `Decision:` lines. `scripts/board.py` refuses to post one, and
+every agent file forbids posting one by any other route. Be aware this is a
+rule, not proof: agents use your `gh` login, so GitHub shows the same author
+either way, and a raw `gh issue comment` would get past `board.py`. If you
+want Claude's help deciding, ask it to *draft* the comment, then post it
+yourself.
 
 ---
 

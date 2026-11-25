@@ -98,6 +98,7 @@ the orchestrator says to import only)
 - Edit `engagement.yaml`, including `approval.scope_approved`.
 - Put credentials, hashes or tokens in an issue, even if Nessus captured them.
 - Give a finding a verdict, or delete or move files in `engagement/inbox/`.
+- Write a `Decision:` line by any route (`board.py`, raw `gh`, the API).
 
 ## Handoff
 

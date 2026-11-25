@@ -84,6 +84,7 @@ to the same branch, re-run `check-secrets`, then move the returned issue
 - Change a verdict, or leave out a verified finding.
 - Include credentials, hashes or tokens, even ones quoted in plugin output.
 - Merge the PR, or push to the default branch.
+- Write a `Decision:` line by any route (`board.py`, raw `gh`, the API).
 
 ## Handoff
 

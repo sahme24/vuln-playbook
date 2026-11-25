@@ -244,7 +244,7 @@ agent gets confused.
 | let an agent make a move it doesn't own (e.g. report-writer marking something verified) | the transition table in `labels.md` is enforced, not just documented |
 | claim an issue that already has any `claimed:` label | two verifiers on one finding would post two verdicts |
 | accept a verifier verdict without the verifier's claim | same reason; the claim is removed in the same call as the verdict |
-| post any comment or issue containing a line starting with `Decision:` | agents use the same GitHub login as you, so this ban is the only proof a decision came from you |
+| post any comment or issue containing a line starting with `Decision:` | agents use the same GitHub login as you, so GitHub can't show who wrote a decision. This ban plus the agent rules keep decisions with you. It is a rule, not proof: a raw `gh issue comment` would get past it (see `playbook/labels.md` section 4) |
 | post text that looks like a credential (a password written out with its value, private keys, AWS/GitHub tokens) | credentials must never land in issues |
 | create an issue with a label that isn't in the catalog | a typo would silently create a new, meaningless label |
 | open an issue for an informational (severity 0) plugin | triage already excluded those |
@@ -270,6 +270,16 @@ The orchestrator then runs `board.py relay-decision --issue N`, which finds
 your latest `Decision:` comment, applies it and posts a handoff with rule
 `human_decision` that links to your comment. A decision without a `Reason:`
 line is refused, because the auditor needs to know why.
+
+After the board change, it also adds a `human_decision` block to
+`engagement/output/triage/<plugin_id>.json`. The verifier's original verdict
+(`needs-human`) and rule stay in the file, so you can see both what the rules
+concluded and what you decided. Running it twice with the same comment is
+harmless, but a different decision already on file is refused rather than
+overwritten.
+
+Want Claude's help? Ask it to draft the `Decision:` and `Reason:` text, then
+post it yourself. Agents never post a `Decision:` line by any route.
 
 ### Useful board commands (run inside the engagement repo)
 

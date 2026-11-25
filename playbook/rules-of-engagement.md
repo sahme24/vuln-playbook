@@ -97,7 +97,8 @@ Resume only after the human has resolved the cause and said to continue.
 - When evidence conflicts or agents disagree, the decision goes to the human
   as a `needs-human` issue. Nobody guesses, and no agent overrides another.
 - The human decides by commenting `Decision: <verdict>` and `Reason: ...` on
-  the issue. Only the human can write that line, because `board.py` refuses
-  to post one.
+  the issue. Only the human writes that line: `board.py` refuses to post one,
+  and no agent may post one by any other route (raw `gh`, API, web UI). An
+  agent may draft the text for the human to post.
 - The human merges the audited report PR. That merge is the release of the
   report.

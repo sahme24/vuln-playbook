@@ -48,7 +48,7 @@ Sources referred to below:
 
 | ID | Check | How | Owner on failure |
 |---|---|---|---|
-| D1 | Every host named anywhere in the report is in scope. | `python scripts/scope.py --engagement ENGAGEMENT --target <ip> ... --dry-run` with every host from the report. Any error fails. | recon-scanner |
+| D1 | Every host named in the report **outside the rejected-hosts table** (findings, accepted risks, appendices, discovery summary) is in scope. The rejected-hosts table lists out-of-scope hosts on purpose; D2 checks it. | `python scripts/scope.py --engagement ENGAGEMENT --target <ip> ... --dry-run` with every such host. Any error fails. | recon-scanner |
 | D2 | Every host in the rejected-hosts table appears in `rejected_hosts` of `findings.json`, and none of them appears in a finding. | Compare. | recon-scanner |
 | D3 | The affected-host list of each finding matches the group's `affected` list. | `to_open.json`. | recon-scanner (grouping) / report-writer (copying) |
 

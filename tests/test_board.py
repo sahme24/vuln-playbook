@@ -1,3 +1,4 @@
+import json
 import os
 import tempfile
 
@@ -342,6 +343,108 @@ def test_latest_decision_wins():
     fake_gh.add_human_comment(number, "Decision: false-positive\nReason: first look")
     fake_gh.add_human_comment(number, "Decision: verified\nReason: second look, still vulnerable")
     assert board.latest_decision(number, fake_gh.run_gh, None)["decision"] == "verified"
+
+
+# --- writing the human decision back to the triage file ------------------------------
+
+def write_triage_file(folder, plugin_id, verdict):
+    """Create engagement/output/triage/<plugin_id>.json the way triage.py
+    would, with just the fields record_human_decision looks at."""
+    triage_folder = os.path.join(folder, "triage")
+    os.makedirs(triage_folder, exist_ok=True)
+    path = os.path.join(triage_folder, str(plugin_id) + ".json")
+    data = {"plugin_id": plugin_id, "verdict": verdict, "rule": "banner_only_backport"}
+    with open(path, "w", encoding="utf-8") as handle:
+        json.dump(data, handle)
+    return path
+
+
+def read_json_file(path):
+    with open(path, "r", encoding="utf-8") as handle:
+        return json.load(handle)
+
+
+DECISION = {"decision": "verified", "reason": "banner revision older than the fix",
+            "url": "https://github.com/OWNER/REPO/issues/4#issuecomment-1",
+            "author": "operator", "created_at": "2026-11-24T10:00:00Z"}
+
+
+def test_record_human_decision_keeps_verifier_verdict():
+    # The dry run left triage/900101.json saying "needs-human" after the human
+    # had decided, so the file on disk contradicted the board. The decision
+    # must be added, but the verifier's verdict and rule must survive next to
+    # it, or the history of why a human was asked is lost.
+    with tempfile.TemporaryDirectory() as folder:
+        path = write_triage_file(folder, 900101, "needs-human")
+        returned = board.record_human_decision(folder, 900101, DECISION)
+        data = read_json_file(path)
+        assert returned == path
+        assert data["verdict"] == "needs-human"
+        assert data["rule"] == "banner_only_backport"
+        assert data["human_decision"]["verdict"] == "verified"
+        assert data["human_decision"]["reason"] == "banner revision older than the fix"
+        assert data["human_decision"]["url"] == DECISION["url"]
+        assert data["human_decision"]["author"] == "operator"
+
+
+def test_record_same_decision_twice_is_harmless():
+    # If the command is re-run after a crash, writing the same decision again
+    # must not fail, otherwise the operator gets stuck on a harmless retry.
+    with tempfile.TemporaryDirectory() as folder:
+        path = write_triage_file(folder, 900101, "needs-human")
+        board.record_human_decision(folder, 900101, DECISION)
+        board.record_human_decision(folder, 900101, DECISION)
+        assert read_json_file(path)["human_decision"]["url"] == DECISION["url"]
+
+
+def test_record_different_decision_is_refused():
+    # A second, different decision would silently overwrite the first one and
+    # erase the record of what the human originally decided.
+    with tempfile.TemporaryDirectory() as folder:
+        path = write_triage_file(folder, 900101, "needs-human")
+        board.record_human_decision(folder, 900101, DECISION)
+        other = dict(DECISION)
+        other["url"] = "https://github.com/OWNER/REPO/issues/4#issuecomment-2"
+        other["decision"] = "false-positive"
+        with pytest.raises(ValueError, match="already records a different"):
+            board.record_human_decision(folder, 900101, other)
+        assert read_json_file(path)["human_decision"]["verdict"] == "verified"
+
+
+def test_record_on_finding_not_sent_to_human_is_refused():
+    # Only "needs-human" findings can carry a human decision. A decision on a
+    # file that says "verified" means the wrong plugin or issue was used, and
+    # writing it would attach a person's verdict to an unrelated finding.
+    with tempfile.TemporaryDirectory() as folder:
+        write_triage_file(folder, 900104, "verified")
+        with pytest.raises(ValueError, match="not 'needs-human'"):
+            board.record_human_decision(folder, 900104, DECISION)
+
+
+def test_record_without_triage_file_is_refused():
+    # A missing file must be reported loudly: the board has already changed,
+    # so the operator needs to know the disk record could not be updated.
+    with tempfile.TemporaryDirectory() as folder:
+        with pytest.raises(ValueError, match="no triage file"):
+            board.record_human_decision(folder, 900101, DECISION)
+
+
+def test_record_rejects_bad_plugin_id_and_decision():
+    # A zero, negative or text plugin ID would build a nonsense file path,
+    # and a decision without its comment URL could not be traced to a person.
+    with tempfile.TemporaryDirectory() as folder:
+        write_triage_file(folder, 900101, "needs-human")
+        with pytest.raises(ValueError, match="positive integer"):
+            board.record_human_decision(folder, 0, DECISION)
+        with pytest.raises(ValueError, match="positive integer"):
+            board.record_human_decision(folder, -5, DECISION)
+        with pytest.raises(ValueError, match="positive integer"):
+            board.record_human_decision(folder, "900101", DECISION)
+        with pytest.raises(ValueError, match="dict"):
+            board.record_human_decision(folder, 900101, "verified")
+        missing_url = {"decision": "verified", "reason": "x"}
+        with pytest.raises(ValueError, match="missing 'url'"):
+            board.record_human_decision(folder, 900101, missing_url)
 
 
 # --- creating and closing issues -----------------------------------------------------

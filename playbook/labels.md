@@ -179,10 +179,23 @@ block (`Agent: orchestrator`, `Rule fired: human_decision`) whose evidence
 links to the human's comment.
 
 Agents post to GitHub through the same `gh` login as the human, so the comment
-author cannot tell the two apart. That is why this rule is enforced in code:
-**`board.py` refuses to post any comment that contains a line starting with
-`Decision:`.** A `Decision:` line on an issue can therefore only have been
-typed by the human in GitHub.
+author cannot tell the two apart. Two layers keep decisions with the human:
+
+1. **`board.py` refuses to post any comment that contains a line starting
+   with `Decision:`.**
+2. Every agent file and `CLAUDE.md` forbid posting a `Decision:` line by any
+   other route (raw `gh issue comment`, the API, the web UI).
+
+This is a rule, not proof. Because the login is shared, nothing in GitHub can
+show who typed the line, and a raw `gh` call would get past layer 1. If the
+human wants help, an agent may draft the comment text in chat, and the human
+posts it.
+
+When `relay-decision` applies the decision, it also writes a `human_decision`
+block (verdict, reason, comment URL, author, time) into
+`engagement/output/triage/<plugin_id>.json`. The verifier's own verdict and
+rule stay in that file next to it, so the record shows both why a human was
+asked and what they decided.
 
 ---
 

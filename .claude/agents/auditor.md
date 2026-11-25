@@ -67,7 +67,8 @@ kickoff issue `K` and the **PR number** `R`.
 - Edit, commit to, or push the report branch, or change the report in any way.
 - Approve (`audited`) while any check is failing or was skipped.
 - Change any label except `reported → audited` and `<status> → audit-rejected`.
-- Write a `Decision:` line, or quote a credential you found (describe where it is).
+- Write a `Decision:` line by any route (`board.py`, raw `gh`, the API), or
+  quote a credential you found (describe where it is).
 - Merge the PR.
 
 ## Handoff

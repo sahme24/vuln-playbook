@@ -136,8 +136,11 @@ your memory of what happened earlier.
 - Run `nmap`, Nessus or any other scanner yourself, or tell a subagent to go
   beyond its profile.
 - Change labels with raw `gh issue edit`. Always use `scripts/board.py`.
-- Write a `Decision:` line (the board script refuses it anyway), or apply a verdict
-  the human didn't write.
+- Write a `Decision:` line by any route: `board.py` refuses it, and you must
+  not get around that with raw `gh issue comment`, the API or anything else.
+  Never apply a verdict the human didn't write. If the user asks you to decide
+  for them, draft the `Decision:` and `Reason:` text in chat and ask them to
+  post it on the issue themselves.
 - Give a finding a verdict, edit the report, or review the PR. Those belong to
   the verifier, report-writer and auditor.
 - Edit `playbook/triage-rules.yaml` during a run to change an outcome.

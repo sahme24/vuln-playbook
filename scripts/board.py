@@ -598,6 +598,65 @@ def relay_decision(number, run_gh, repo):
     return decision
 
 
+def record_human_decision(output_dir, plugin_id, decision):
+    """Write the human's decision into engagement/output/triage/<plugin_id>.json.
+
+    Without this, the triage file keeps saying "needs-human" after the board
+    has moved on, and anyone reading the files on disk (the report-writer,
+    the auditor, the operator later) sees a stale outcome. The verifier's own
+    "verdict" and "rule" are deliberately left untouched: they record what
+    the triage rules concluded, and the new "human_decision" block records
+    what the person decided on top of that. Keeping both preserves the history.
+
+    `decision` is the dict returned by relay_decision. Returns the file path."""
+    if type(plugin_id) is not int or plugin_id < 1:
+        raise ValueError("plugin_id must be a positive integer")
+    if type(decision) is not dict:
+        raise ValueError("decision must be the dict returned by relay_decision")
+    for field in ["decision", "reason", "url"]:
+        if field not in decision:
+            raise ValueError("decision is missing '" + field + "'")
+
+    path = os.path.join(output_dir, "triage", str(plugin_id) + ".json")
+    if not os.path.isfile(path):
+        raise ValueError(
+            "no triage file for plugin " + str(plugin_id) + " at " + path
+            + "; the board was updated but the decision could not be written to disk"
+        )
+    with open(path, "r", encoding="utf-8") as handle:
+        result = json.load(handle)
+    if type(result) is not dict:
+        raise ValueError(path + " must contain a JSON object")
+
+    # Only findings the triage rules sent to a human can carry a human
+    # decision. Anything else means the wrong file or a mixed-up issue.
+    if result.get("verdict") != "needs-human":
+        raise ValueError(
+            path + " has verdict " + repr(result.get("verdict"))
+            + ", not 'needs-human'; refusing to attach a human decision to it"
+        )
+
+    # Re-running with the same decision comment is harmless (same data
+    # written again). A DIFFERENT decision already on file would be silently
+    # overwritten, which would erase history, so that is refused.
+    existing = result.get("human_decision")
+    if existing is not None and existing.get("url") != decision["url"]:
+        raise ValueError(
+            path + " already records a different human decision (" + repr(existing.get("url")) + ")"
+        )
+
+    result["human_decision"] = {
+        "verdict": decision["decision"],
+        "reason": decision["reason"],
+        "url": decision["url"],
+        "author": decision.get("author"),
+        "created_at": decision.get("created_at"),
+    }
+    with open(path, "w", encoding="utf-8") as handle:
+        json.dump(result, handle, indent=2)
+    return path
+
+
 # --- finding issues ------------------------------------------------------------------
 
 def truncate_lines(text, max_lines):
@@ -895,7 +954,13 @@ def main():
     elif args.command == "decision":
         print(json.dumps(latest_decision(args.issue, run_gh, repo), indent=2))
     elif args.command == "relay-decision":
-        print(json.dumps(relay_decision(args.issue, run_gh, repo), indent=2))
+        # Read the plugin ID before relaying, so a non-finding issue is refused
+        # before any label changes. The file is written only after the board
+        # change succeeded, so disk never claims a decision the board lacks.
+        plugin_id = plugin_id_of(get_issue(args.issue, run_gh, repo))
+        decision = relay_decision(args.issue, run_gh, repo)
+        decision["triage_file"] = record_human_decision(args.output_dir, plugin_id, decision)
+        print(json.dumps(decision, indent=2))
     elif args.command == "review-pr":
         handoff = handoff_from_args(args, "auditor", "PR #" + str(args.pr), args.verdict)
         print(json.dumps({"pr": args.pr, "verdict": args.verdict,

@@ -85,7 +85,8 @@ the error. Never leave a claim behind.
   `claimed:verifier`.
 - Run a scanner, or send anything to the target hosts. You only read public
   sources.
-- Write a `Decision:` line, or put credentials in a comment.
+- Write a `Decision:` line by any route (`board.py`, raw `gh`, the API), or
+  put credentials in a comment.
 - Edit `playbook/triage-rules.yaml`, `engagement.yaml` or any output file by hand.
 
 ## Handoff
